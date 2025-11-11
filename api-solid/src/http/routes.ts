@@ -1,6 +1,6 @@
-import type fastify = require("fastify");
-import register = require("./register");
+import { register } from "../http/controllers/register.js";
+import { FastifyInstance } from "fastify";
 
-export async function appRoutes(app: fastify.FastifyInstance) {
-  app.post("/users", register.register);
+export async function appRoutes(app: FastifyInstance) {
+  app.post("/users", register);
 }
