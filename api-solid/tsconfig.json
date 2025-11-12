@@ -11,6 +11,9 @@
     "moduleResolution": "NodeNext",
     "target": "ES2022",
     "types": [],
+    "paths": {
+      "@/*": ["./src/*"]
+    },
     // For nodejs:
     // "lib": ["esnext"],
     // "types": ["node"],
