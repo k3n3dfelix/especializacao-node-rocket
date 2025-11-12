@@ -1,1 +1,1 @@
-# especializacao-node-rocket
+# Especialização em Back-End NodeJs - Rocketseat
