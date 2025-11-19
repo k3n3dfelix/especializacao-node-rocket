@@ -1,48 +1,38 @@
 import { FastifyRequest, FastifyReply } from "fastify";
-import { z } from "zod";
-import { InvalidCredentialsError } from "@/use-cases/errors/invalid-credentials-error";
-import { makeAuthenticateUseCase } from "@/use-cases/factories/make-authenticate-use-case";
 
-export async function refresh(
-  request: FastifyRequest,
-  reply: FastifyReply
-) {
-  const authenticateBodySchema = z.object({
-    email: z.string().email(),
-    password: z.string().min(6),
-  });
+export async function refresh(request: FastifyRequest, reply: FastifyReply) {
   await request.jwtVerify({ onlyCookie: true });
 
-  
-  const result = authenticateBodySchema.safeParse(request.body);
+  const { role } = request.user;
 
-  if (!result.success) {
-    return reply.status(400).send(result.error);
-  }
-
-  const { email, password } = result.data;
-
-  try {
-    const authenticateUseCase = makeAuthenticateUseCase();
-
-    const { user } = await authenticateUseCase.execute({ email, password });
-
-    const token = await reply.jwtSign(
-      {},
-      {
-        sign: {
-          sub: user.id,
-        },
-      }
-    );
-    return reply.status(200).send({ token });
-  } catch (error) {
-    if (error instanceof InvalidCredentialsError) {
-      return reply.status(409).send({ message: error.message });
+  const token = await reply.jwtSign(
+    {
+      role,
+    },
+    {
+      sign: {
+        sub: request.user.sub,
+      },
     }
+  );
 
-    throw error;
-  }
+  const refreshToken = await reply.jwtSign(
+    { role },
+    {
+      sign: {
+        sub: request.user.sub,
+        expiresIn: "7d",
+      },
+    }
+  );
 
-  return reply.status(200).send();
+  return reply
+    .setCookie("refreshToken", refreshToken, {
+      path: "/",
+      secure: true,
+      sameSite: true,
+      httpOnly: true,
+    })
+    .status(200)
+    .send({ token });
 }
