@@ -1,14 +1,16 @@
 import fastify from "fastify";
-import { appRoutes } from "./http/routes.js";
+import { appRoutes, userRoutes } from "./http/controllers/users/routes.js";
 import { ZodError } from "zod";
 import { env } from "./env";
 import fastifyJwt from "@fastify/jwt";
 import fastifyCookie from "@fastify/cookie";
+import { gymsRoutes } from "./http/controllers/gyms/routes.js";
+import { checkInsRoutes } from "./http/controllers/check-ins/routes.js";
 
 export const app = fastify();
 
 app.register(fastifyJwt, {
-  secret: env.JWT_SECRET,  // In a real application, use a secure method to manage secrets 
+  secret: env.JWT_SECRET, // In a real application, use a secure method to manage secrets
   cookie: {
     cookieName: "refreshToken",
     signed: false,
@@ -19,16 +21,20 @@ app.register(fastifyJwt, {
 });
 
 app.register(fastifyCookie);
-app.register(appRoutes);
+app.register(gymsRoutes);
+app.register(userRoutes);
+app.register(checkInsRoutes);
 
 app.setErrorHandler((error, _, reply) => {
-  if(error instanceof ZodError){
-    return reply.status(400).send({ message: "Validation error.", issues: error.format() });
+  if (error instanceof ZodError) {
+    return reply
+      .status(400)
+      .send({ message: "Validation error.", issues: error.format() });
   }
 
-  if(env.NODE_ENV !== "production"){
+  if (env.NODE_ENV !== "production") {
     console.error(error);
-  }else{
+  } else {
     // TODO: Here you can integrate with an external logging service DataDog/NewRelic/Sentry
   }
 
